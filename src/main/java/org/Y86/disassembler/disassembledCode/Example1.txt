@@ -1,0 +1,19 @@
+%rdi --> has 4
+%rsi --> has 3
+return rdi + rsi ( 7 )
+
+X86-64
+addq %rdi, %rsi
+movq %rsi, %rax
+ret
+
+
+Y86-64
+
+call main
+halt
+
+main:
+    addq %rdi,%rsi
+    rrmovq %rsi,%rax
+    ret
