@@ -29,6 +29,7 @@ ProcessBuilder builder = new ProcessBuilder("cmd","/c","gcc","test.c");
             // Handle exception
         }
  */
-        Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/","E3.txt");
+        //Disassembler.fakeBreak("./src/main/java/org/Y86/disassembler/disassembledCode/fakeExamples/","E3.txt");
+        Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/","E5.txt", 0);
     }
 }

@@ -3,6 +3,7 @@ package org.Y86.disassembler;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /*
@@ -11,13 +12,39 @@ Return Disassembled object that contains all the instructions :D
 public class Disassembler{
 
     /***
-     * Params Example()
+     *
      * Reads the name of the file in the given directory
      *
      * @param fileName
      * @return
      */
-    public static Disassembled Break(String Dir,String fileName){
+    public static Disassembled Break(String Dir,String fileName, int memStartPos){
+        StringBuilder fileContents = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(Dir + fileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                fileContents.append(line);
+
+            }
+        } catch (IOException _) {
+        }
+        if(fileContents.isEmpty()){
+            return null;
+        }
+        //System.out.println();
+        return new Disassembled(fileContents.toString().split(" "),memStartPos);
+    }
+
+    /**
+     * Deprecated already LOL
+     * Works with the examples from the book, not actual object code hence *fake*
+     *
+     * Params Example() Works with fakeExamples<--></-->
+     * @param Dir
+     * @param fileName
+     * @return
+     */
+    public static Disassembled fakeBreak(String Dir,String fileName){
         StringBuilder fileContents = new StringBuilder();
         StringBuilder addressContents = new StringBuilder();
         HashMap<String, String> memToInstruction = new HashMap<String,String>();
