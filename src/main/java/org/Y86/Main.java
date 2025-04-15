@@ -30,6 +30,10 @@ ProcessBuilder builder = new ProcessBuilder("cmd","/c","gcc","test.c");
         }
  */
         //Disassembler.fakeBreak("./src/main/java/org/Y86/disassembler/disassembledCode/fakeExamples/","E3.txt");
-        Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/","E5.txt", 0);
+
+        /*
+        Besides E1, Examples don't reflect the changed of 13!
+         */
+        Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/","E1.txt",0);
     }
 }

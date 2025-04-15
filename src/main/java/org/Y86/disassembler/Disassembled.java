@@ -70,9 +70,8 @@ public class Disassembled {
             //System.out.println(labels);
             //System.out.println(paddedNumber);
             if (!labels.isEmpty() && labels.containsKey(paddedNumber)) {
-                System.out.println(labels.get(paddedNumber) + ": ");
+                System.out.println("\n" + labels.get(paddedNumber) + ": ");
             }
-
             switch (allContents[i]) {
                 //Need all the instructions <---------------
                 case "00"://Halt
@@ -152,7 +151,8 @@ public class Disassembled {
         /*
         Ending Portion (Usually the stack)
          */
-        System.out.println("\n.pos 0x300"); //0x300 is just a given general number
+        String paddedNumber = String.format("%-" + width + "x", currentInstructionOffset + 300); //Default 300  :D
+        System.out.println("\n.pos " + "0x" + paddedNumber); //0x300 is just a given general number
         System.out.println("stack:");
     }
 
@@ -243,7 +243,7 @@ public class Disassembled {
         currentAddress = currentAddress.strip();
         if(!labels.isEmpty()){
             if(memToInstruction.get(currentAddress) != null && memToInstruction.get(currentAddress).contentEquals(currentInstruct) && labels.containsKey(currentAddress)){
-                System.out.println(labels.get(currentAddress) + ":");
+                System.out.println("\n" + labels.get(currentAddress) + ":");
                 labels.remove(currentAddress);
             }
         }

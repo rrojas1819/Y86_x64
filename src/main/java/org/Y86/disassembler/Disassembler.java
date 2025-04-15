@@ -18,7 +18,8 @@ public class Disassembler{
      * @param fileName
      * @return
      */
-    public static Disassembled Break(String Dir,String fileName, int memStartPos){
+    public static Disassembled Break(String Dir,String fileName,int memStartPos){
+        memStartPos +=13;
         StringBuilder fileContents = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(Dir + fileName))) {
             String line;
