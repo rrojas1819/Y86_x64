@@ -1,6 +1,5 @@
 package org.Y86.disassembler;
 
-import java.sql.SQLData;
 import java.util.*;
 
 /***
@@ -12,14 +11,48 @@ public class Disassembled {
     private HashMap<String, String> memToInstruction;
     private HashMap<String, String> registers;
     private HashMap<String, String> labels = new HashMap<String,String>();
+    private HashMap<String,String> instructions;
     private int currentInstructionOffset;
 
     /***
-     * Creates the registers Hashmap!
+     * Creates the instruction Hashmap!
+     * To be used for Future overHaul!
      * @return
      */
-    private HashMap<String, String> registerCreation() {
-        HashMap<String, String> registers =  new HashMap<String, String>();
+    private void instructionCreation() {
+        instructions =  new HashMap<String, String>();
+        instructions.put("00","halt");
+        instructions.put("10","nop");
+        instructions.put("20","rrmovq");
+        instructions.put("21","cmovle");
+        instructions.put("22","cmovl");
+        instructions.put("23","cmove");
+        instructions.put("24","cmovne");
+        instructions.put("25","cmovge");
+        instructions.put("26","cmovg");
+        instructions.put("30","irmovq");
+        instructions.put("40","rrmovq");
+        instructions.put("50","mrmovq");
+        instructions.put("60","addq");
+        instructions.put("61","subq");
+        instructions.put("62","andq");
+        instructions.put("63","orq");
+        instructions.put("70","jmp");
+        instructions.put("71","jle");
+        instructions.put("72","jl");
+        instructions.put("73","je");
+        instructions.put("74","jne");
+        instructions.put("75","jge");
+        instructions.put("76","jg");
+        instructions.put("80","call");
+        instructions.put("90","ret");
+        instructions.put("A0","pushq");
+        instructions.put("B0","popq");
+
+
+    }
+    private void registerCreation() {
+        registers =  new HashMap<String, String>();
         registers.put("0","%rax");
         registers.put("1","%rcx");
         registers.put("2","%rdx");
@@ -36,20 +69,36 @@ public class Disassembled {
         registers.put("13","%r13");
         registers.put("14","%r14");
         registers.put("15","F");
-
-       return registers;
     }
-    public Disassembled(String[] allContents,int memStartPos) {
-        registers = registerCreation();
+
+    /**
+     * Checks if the file has the three instructions to signify the start.
+     * @param allContents
+     * @param memStartPos
+     * @return
+     */
+    private String[] checkStart(String[] allContents,int memStartPos){
+        if(allContents[memStartPos].contentEquals("30") && allContents[memStartPos + 1].contentEquals("F4") && allContents[memStartPos+10].contentEquals("80") && allContents[memStartPos + 19].contentEquals("00")){
+            System.out.println("Cheese");
+        }
+        return allContents;
+
+    }
+
+
+    public Disassembled(String[] allContents, int memStartPos) {
+        registerCreation();
+        //instructionCreation();
         currentInstructionOffset = memStartPos;
+        currentInstructionOffset += 13; // Offset of start --> only occurs when handling non main start.
         int width = 16;
         int instructionLength = 0; // For the offsets
         /*
         Beginning Portion
          */
-
+        allContents = checkStart(allContents,memStartPos);
         System.out.println(".pos 0");
-        //System.out.println("irmovq stack, %rsp"); //Set up stack pointer
+        System.out.println("irmovq stack, %rsp"); //Set up stack pointer
         System.out.println("call main");
         System.out.println("halt");
 
@@ -72,6 +121,7 @@ public class Disassembled {
             if (!labels.isEmpty() && labels.containsKey(paddedNumber)) {
                 System.out.println("\n" + labels.get(paddedNumber) + ": ");
             }
+
             switch (allContents[i]) {
                 //Need all the instructions <---------------
                 case "00"://Halt
@@ -174,7 +224,7 @@ public class Disassembled {
         //System.out.println(fullInstruction);
 
         String restToDecode = fullInstruction.toString().substring(2);
-        //System.out.println(restToDecode);
+        System.out.println(restToDecode);
         switch(instruction.substring(0,1)){
             case "8":
                  String label = createLabel(restToDecode,16);//Just assume max address constantly, never wrong.
@@ -187,7 +237,6 @@ public class Disassembled {
                 return restToDecode;
 
         }
-
         return fullInstruction.toString();
     }
 
@@ -198,7 +247,7 @@ public class Disassembled {
      * @param addressContents
      * @param memToInstruction
      */
-    public Disassembled(String allContents,String addressContents,HashMap<String,String> memToInstruction){
+    public Disassembled(String allContents, String addressContents, HashMap<String,String> memToInstruction){
         this.memToInstruction = memToInstruction;
         String[] allInstructions = allContents.split("\n"); //We are assuming it is separated by a new line.
         String[] addresses = addressContents.split("\n");
@@ -318,6 +367,7 @@ public class Disassembled {
      * @return
      */
     private String registerDecode(String restOfDecode,int check) {
+        //System.out.println(restOfDecode);
         String firstRegister = restOfDecode.substring(2,3);
         String secondRegister = restOfDecode.substring(3);
         firstRegister = registers.get(firstRegister);

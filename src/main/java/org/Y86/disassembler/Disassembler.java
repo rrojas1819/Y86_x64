@@ -3,7 +3,6 @@ package org.Y86.disassembler;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 
 /*
@@ -18,8 +17,7 @@ public class Disassembler{
      * @param fileName
      * @return
      */
-    public static Disassembled Break(String Dir,String fileName,int memStartPos){
-        memStartPos +=13;
+    public static Disassembled Break(String Dir, String fileName, int memStartPos){
         StringBuilder fileContents = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(Dir + fileName))) {
             String line;
@@ -33,7 +31,7 @@ public class Disassembler{
             return null;
         }
         //System.out.println();
-        return new Disassembled(fileContents.toString().split(" "),memStartPos);
+        return new Disassembled(fileContents.toString().split(" +"),memStartPos);
     }
 
     /**
@@ -45,7 +43,7 @@ public class Disassembler{
      * @param fileName
      * @return
      */
-    public static Disassembled fakeBreak(String Dir,String fileName){
+    public static Disassembled fakeBreak(String Dir, String fileName){
         StringBuilder fileContents = new StringBuilder();
         StringBuilder addressContents = new StringBuilder();
         HashMap<String, String> memToInstruction = new HashMap<String,String>();
