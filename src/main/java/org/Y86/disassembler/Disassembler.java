@@ -22,7 +22,7 @@ public class Disassembler{
         try (BufferedReader reader = new BufferedReader(new FileReader(Dir + fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                fileContents.append(line);
+                fileContents.append(line).append(" ");
 
             }
         } catch (IOException _) {
@@ -30,8 +30,8 @@ public class Disassembler{
         if(fileContents.isEmpty()){
             return null;
         }
-        //System.out.println();
-        return new Disassembled(fileContents.toString().split(" +"),memStartPos);
+        //System.out.println(fileContents);
+        return new Disassembled(fileContents.toString().split("\\s+"),memStartPos);
     }
 
     /**

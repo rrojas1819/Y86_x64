@@ -13,10 +13,13 @@ public class Disassembled {
     private HashMap<String, String> labels = new HashMap<String,String>();
     private HashMap<String,String> instructions;
     private int currentInstructionOffset;
+    private boolean start;
+
 
     /***
      * Creates the instruction Hashmap!
      * To be used for Future overHaul!
+     * Or maybe not, depends ._.
      * @return
      */
     private void instructionCreation() {
@@ -77,11 +80,18 @@ public class Disassembled {
      * @param memStartPos
      * @return
      */
-    private String[] checkStart(String[] allContents,int memStartPos){
-        if(allContents[memStartPos].contentEquals("30") && allContents[memStartPos + 1].contentEquals("F4") && allContents[memStartPos+10].contentEquals("80") && allContents[memStartPos + 19].contentEquals("00")){
-            System.out.println("Cheese");
+    private void checkStart(String[] allContents,int memStartPos){
+        if(allContents[0].contentEquals("30") && allContents[1].contentEquals("F4") && allContents[10].contentEquals("80") && allContents[19].contentEquals("00")){
+            System.out.println(".pos " + memStartPos);
+            start=true;
+            /*
+            System.out.println("irmovq stack, %rsp"); //Set up stack pointer
+            System.out.println("call main");
+            System.out.println("halt");
+             */
+        }else{
+            currentInstructionOffset+=21;
         }
-        return allContents;
 
     }
 
@@ -89,18 +99,15 @@ public class Disassembled {
     public Disassembled(String[] allContents, int memStartPos) {
         registerCreation();
         //instructionCreation();
-        currentInstructionOffset = memStartPos;
-        currentInstructionOffset += 13; // Offset of start --> only occurs when handling non main start.
+        currentInstructionOffset = 0; //Memory isn't real, so the beginning of the indexing of the array is always zero.
+        //currentInstructionOffset += 13; // Offset of start --> only occurs when handling non main start.
         int width = 16;
         int instructionLength = 0; // For the offsets
         /*
         Beginning Portion
          */
-        allContents = checkStart(allContents,memStartPos);
-        System.out.println(".pos 0");
-        System.out.println("irmovq stack, %rsp"); //Set up stack pointer
-        System.out.println("call main");
-        System.out.println("halt");
+        checkStart(allContents,memStartPos);
+
 
         /*
         If array
@@ -112,12 +119,13 @@ public class Disassembled {
         .quad
          */
 
-        System.out.println("\nmain:");
+        //System.out.println("\nmain:");
         for (int i = 0; i < allContents.length; i += instructionLength) {
 
             String paddedNumber = String.format("%-" + width + "x", currentInstructionOffset).replace(' ', '0');
             //System.out.println(labels);
-            //System.out.println(paddedNumber);
+            //System.out.println(paddedNumber + ": padded number");
+            //System.out.println(currentInstructionOffset + ": actual offset currently");
             if (!labels.isEmpty() && labels.containsKey(paddedNumber)) {
                 System.out.println("\n" + labels.get(paddedNumber) + ": ");
             }
@@ -127,6 +135,8 @@ public class Disassembled {
                 case "00"://Halt
                     instructionLength = 1;
                     currentInstructionOffset += instructionLength;
+                    //System.out.println(currentInstructionOffset);
+
                     System.out.println("halt ");
                     break;
                 case "10"://Nop
@@ -138,7 +148,7 @@ public class Disassembled {
                 case "30"://irmovq
                     instructionLength = 10;
                     currentInstructionOffset += instructionLength;
-                    System.out.println("irmovq " + "$0x" + cycleReadMemory(allContents, i, instructionLength, "30") + "," + registerDecode(cycleReadMemory(allContents, i, instructionLength, "30"), 3));
+                    System.out.println("irmovq " + "$0x" + cycleReadMemory(allContents, i, instructionLength, "30") + "," + registerDecode( allContents[i] + cycleReadMemory(allContents, i, instructionLength, "30"), 3));
 
                     break;
                 case "40"://rmmovq
@@ -157,6 +167,7 @@ public class Disassembled {
                     instructionLength = 9;
                     currentInstructionOffset += instructionLength;
                     System.out.println(cycleReadMemory(allContents, i, instructionLength, "80"));
+                    //System.out.println(labels);
                     break;
                 case "90"://Return
                     instructionLength = 1;
@@ -190,7 +201,14 @@ public class Disassembled {
                             currentInstructionOffset += instructionLength;
                             System.out.println(decodeFamilyHelper(allContents[i], cycleReadMemory(allContents, i, instructionLength, "7")));
                             break;
+                        default:
+                            System.out.println("Program failed to understand instruction?: " + allContents[i]);
+                            if(allContents.length > i){
+                                i++;
+                            }
+                            continue;
                     }
+
 
             }
 
@@ -201,9 +219,11 @@ public class Disassembled {
         /*
         Ending Portion (Usually the stack)
          */
-        String paddedNumber = String.format("%-" + width + "x", currentInstructionOffset + 300); //Default 300  :D
-        System.out.println("\n.pos " + "0x" + paddedNumber); //0x300 is just a given general number
-        System.out.println("stack:");
+        if(start){
+            String paddedNumber = String.format("%-" + width + "x", currentInstructionOffset + 300 + memStartPos); //Default 300  :D
+            System.out.println("\n.pos " + "0x" + paddedNumber); //0x300 is just a given general number
+            System.out.println("stack:");
+        }
     }
 
     /**
@@ -223,18 +243,20 @@ public class Disassembled {
         //System.out.println(start);
         //System.out.println(fullInstruction);
 
-        String restToDecode = fullInstruction.toString().substring(2);
-        System.out.println(restToDecode);
+        String restToDecode = fullInstruction.substring(2);
+        //System.out.println(restToDecode);
         switch(instruction.substring(0,1)){
             case "8":
-                 String label = createLabel(restToDecode,16);//Just assume max address constantly, never wrong.
-                //System.out.println(label);
+                String label = createLabel(restToDecode,16);//Just assume max address constantly, never wrong.
+//                System.out.println(labels);
                 return "call " + label;
                 /*Need to deal with the Jumps ALSO NEED to track memory in order to add it!   */
+            case "3":
             case "7":
                 //Labels are addresses anyway so it depends?
                 //System.out.println(restToDecode);
                 return restToDecode;
+
 
         }
         return fullInstruction.toString();
@@ -334,6 +356,9 @@ public class Disassembled {
     private String createLabel(String addressDecode,int length){
         String toStore = addressDecode.substring(0,length);
         Random random = new Random();
+        if(labels.containsKey(addressDecode.substring(0,length))){
+            return "L" + labels.get(addressDecode.substring(0,length));
+        }
         long toLabel = random.nextLong(0,Integer.MAX_VALUE);
         labels.put(toStore,"L" + toLabel);
         //System.out.println(labels);
@@ -369,7 +394,7 @@ public class Disassembled {
     private String registerDecode(String restOfDecode,int check) {
         //System.out.println(restOfDecode);
         String firstRegister = restOfDecode.substring(2,3);
-        String secondRegister = restOfDecode.substring(3);
+        String secondRegister = restOfDecode.substring(3,4);
         firstRegister = registers.get(firstRegister);
         secondRegister = registers.get(secondRegister);
         //System.out.println(firstRegister);
@@ -377,9 +402,9 @@ public class Disassembled {
 
         return switch (check) {
             case 0 -> // rm
-                    firstRegister + ", (" + secondRegister + ") ";
-            case 1 -> //mr
-                    "(" + firstRegister + ")," + secondRegister;
+                    firstRegister + "," +"0x" + restOfDecode.substring(4) +  "(" + secondRegister + ")";
+            case 1 -> //mr This could look better
+                    "0x" + restOfDecode.substring(4) + "(" + firstRegister + ")," + secondRegister;
             case 2 -> //Push or pop
                     firstRegister;
             case 3 -> //irmovq
@@ -400,7 +425,7 @@ public class Disassembled {
      */
     private String decodeFamilyHelper(String currentInstruct, String restOfDecode){
         switch(currentInstruct){
-            case "20"://
+            case "20":
                 return "rrmovq " + registerDecode(restOfDecode,-1);
             case "21"://
                 return "cmovle " + registerDecode(restOfDecode,-1);

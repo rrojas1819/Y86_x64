@@ -34,6 +34,11 @@ ProcessBuilder builder = new ProcessBuilder("cmd","/c","gcc","test.c");
         /*
         Besides E1, Examples don't reflect the changed of 13!
          */
-        Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/","E0.txt",0);
+        try {
+            Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/", "E0.txt", 0);
+        }catch(Exception _){
+            System.out.println("Error was detected!");
+        }
+
     }
 }
