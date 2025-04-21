@@ -36,8 +36,8 @@ ProcessBuilder builder = new ProcessBuilder("cmd","/c","gcc","test.c");
          */
         try {
             Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/", "E0.txt", 0);
-        }catch(Exception _){
-            System.out.println("Error was detected!");
+        }catch(Exception e){
+            System.out.println("Error was detected!\n" + e);
         }
 
     }

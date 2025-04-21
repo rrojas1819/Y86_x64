@@ -8,12 +8,12 @@ import java.util.*;
     Contains all the mappings!
  */
 public class Disassembled {
-    private HashMap<String, String> memToInstruction;
-    private HashMap<String, String> registers;
+    private HashMap<String, String> memToInstruction,registers,instructions;
     private HashMap<String, String> labels = new HashMap<String,String>();
-    private HashMap<String,String> instructions;
     private int currentInstructionOffset;
     private boolean start;
+    private ArrayList<String> arrays = new ArrayList<String>();
+    private Queue<String> memory = new ArrayDeque<>() ,fullInstructions=new ArrayDeque<>();
 
 
     /***
@@ -74,6 +74,14 @@ public class Disassembled {
         registers.put("15","F");
     }
 
+
+
+
+
+
+
+
+
     /**
      * Checks if the file has the three instructions to signify the start.
      * @param allContents
@@ -85,13 +93,50 @@ public class Disassembled {
             System.out.println(".pos " + memStartPos);
             start=true;
             /*
-            System.out.println("irmovq stack, %rsp"); //Set up stack pointer
-            System.out.println("call main");
+            System.out.println("irmovq stack, %rsp"); // 10 ->bytes
+            System.out.println("call main"); //11 --> is call , 12-19 is the address of main
             System.out.println("halt");
              */
-        }else{
-            currentInstructionOffset+=21;
+            currentInstructionOffset+= 20;
+            StringBuilder addressOfMain = new StringBuilder();
+            for(int j =11;j<19;j++){
+                addressOfMain.append(allContents[j]);
+            }
+            String paddedNumber;
+            int i=0;
+            int other = i;
+            StringBuilder fullArray = new StringBuilder();
+
+            while(true){
+                //System.out.println(allContents[currentInstructionOffset + i]);
+                //System.out.println("HAWRO>?");
+                other =i;
+                paddedNumber = String.format("%-" + 16 + "x", currentInstructionOffset + i).replace(' ', '0');
+                if(addressOfMain.toString().contentEquals(paddedNumber)){//Need the label/memory of main to confirm we have reached well main.
+                    //array.add()  //If want to add array, need to just add 8 bytes each time until you reach the main (Another loop
+                    //System.out.println("Main connected!!!");
+                    parser(allContents,0,20);
+                    //System.out.println("\n");
+                    currentInstructionOffset=20;
+                    parser(allContents,currentInstructionOffset + i,allContents.length);
+                    break;
+                }
+                i+=8;
+                fullArray.setLength(0);
+                for(int j = currentInstructionOffset + other; j < currentInstructionOffset + i; j++){
+                    fullArray.append(allContents[j]);
+                }
+                arrays.add(fullArray.toString());
+
+
+            }
+
+            currentInstructionOffset-= 20;
         }
+        else {
+            parser(allContents,currentInstructionOffset,allContents.length);
+        }
+
 
     }
 
@@ -101,105 +146,135 @@ public class Disassembled {
         //instructionCreation();
         currentInstructionOffset = 0; //Memory isn't real, so the beginning of the indexing of the array is always zero.
         //currentInstructionOffset += 13; // Offset of start --> only occurs when handling non main start.
-        int width = 16;
-        int instructionLength = 0; // For the offsets
+
         /*
         Beginning Portion
          */
         checkStart(allContents,memStartPos);
 
+        String paddedNumber = String.format("%-" + 16 + "x", currentInstructionOffset).replace(' ', '0');
+
+        while(!fullInstructions.isEmpty()){
+            if (!labels.isEmpty() && labels.containsKey(memory.peek())) {
+                System.out.println("\n" + labels.get(memory.peek()) + ": ");
+            }
+            memory.remove();
+            System.out.println(fullInstructions.remove());
+                    //System.out.println(fullInstructions.remove() +"\t" + memory.remove());
+        }
+        System.out.println(arrays);
+
 
         /*
-        If array
-        System.out.println(".align 8");
-        array:
-        .quad
-        .quad
-        .quad
-        .quad
+        Ending Portion (Usually the stack)
          */
+        if(start){
+            paddedNumber = String.format("%-" + 16 + "x", currentInstructionOffset + 300 + memStartPos); //Default 300  :D
+            System.out.println("\n.pos " + "0x" + paddedNumber); //0x300 is just a given general number
+            System.out.println("stack:");
+        }
+    }
 
+    private void parser(String[] allContents,int startPos, int length){
+        currentInstructionOffset=startPos;
+        int width = 16;
+        int instructionLength = 0; // For the offsets
         //System.out.println("\nmain:");
-        for (int i = 0; i < allContents.length; i += instructionLength) {
+        for (int i = startPos; i < length; i += instructionLength) {
 
             String paddedNumber = String.format("%-" + width + "x", currentInstructionOffset).replace(' ', '0');
             //System.out.println(labels);
             //System.out.println(paddedNumber + ": padded number");
             //System.out.println(currentInstructionOffset + ": actual offset currently");
-            if (!labels.isEmpty() && labels.containsKey(paddedNumber)) {
-                System.out.println("\n" + labels.get(paddedNumber) + ": ");
-            }
+
+            /*
+            This can be an external check when popping the queue :D
+             */
+
 
             switch (allContents[i]) {
                 //Need all the instructions <---------------
                 case "00"://Halt
                     instructionLength = 1;
+                    memory.add(paddedNumber);
                     currentInstructionOffset += instructionLength;
-                    //System.out.println(currentInstructionOffset);
-
-                    System.out.println("halt ");
+                    fullInstructions.add("halt ");
+                    //System.out.println("halt ");
                     break;
                 case "10"://Nop
                     instructionLength = 1;
+                    memory.add(paddedNumber);
                     currentInstructionOffset += instructionLength;
-                    System.out.println("nop ");
+                    fullInstructions.add("halt ");
 
                     break;
                 case "30"://irmovq
                     instructionLength = 10;
+                    memory.add(paddedNumber);
                     currentInstructionOffset += instructionLength;
-                    System.out.println("irmovq " + "$0x" + cycleReadMemory(allContents, i, instructionLength, "30") + "," + registerDecode( allContents[i] + cycleReadMemory(allContents, i, instructionLength, "30"), 3));
+                    fullInstructions.add("irmovq " + "$0x" + cycleReadMemory(allContents, i, instructionLength, "30") + "," + registerDecode( allContents[i] + cycleReadMemory(allContents, i, instructionLength, "30"), 3));
 
                     break;
                 case "40"://rmmovq
                     instructionLength = 10;
+                    memory.add(paddedNumber);
                     currentInstructionOffset += instructionLength;
-                    System.out.println("rmmovq " + registerDecode(cycleReadMemory(allContents, i, instructionLength, "40"), 0));
+                    fullInstructions.add("rmmovq " + registerDecode(cycleReadMemory(allContents, i, instructionLength, "40"), 0));
 
                     break;
                 case "50"://mrmovq
                     instructionLength = 10;
+                    memory.add(paddedNumber);
+
                     currentInstructionOffset += instructionLength;
-                    System.out.println("mrmovq " + registerDecode(cycleReadMemory(allContents, i, instructionLength, "50"), 1));
+                    fullInstructions.add("mrmovq " + registerDecode(cycleReadMemory(allContents, i, instructionLength, "50"), 1));
 
                     break;
                 case "80"://Call
                     instructionLength = 9;
+                    memory.add(paddedNumber);
+
                     currentInstructionOffset += instructionLength;
-                    System.out.println(cycleReadMemory(allContents, i, instructionLength, "80"));
+                    fullInstructions.add(cycleReadMemory(allContents, i, instructionLength, "80"));
                     //System.out.println(labels);
                     break;
                 case "90"://Return
                     instructionLength = 1;
+                    memory.add(paddedNumber);
                     currentInstructionOffset += instructionLength;
-                    System.out.println("ret ");
+                    fullInstructions.add("ret ");
                     break;
                 case "A0"://Push
                     instructionLength = 2;
+                    memory.add(paddedNumber);
+
                     currentInstructionOffset += instructionLength;
-                    System.out.println("push " + registerDecode(cycleReadMemory(allContents, i, instructionLength, "A0"), 2));
+                    fullInstructions.add("push " + registerDecode(cycleReadMemory(allContents, i, instructionLength, "A0"), 2));
 
                     break;
                 case "B0"://pop
                     instructionLength = 2;
+                    memory.add(paddedNumber);
+
                     currentInstructionOffset += instructionLength;
-                    System.out.println("pop " + registerDecode(cycleReadMemory(allContents, i, instructionLength, "B0"), 2));
+                    fullInstructions.add("pop " + registerDecode(cycleReadMemory(allContents, i, instructionLength, "B0"), 2));
                     break;
                 default:// Pure laziness in wanting to set up
                     switch (allContents[i].substring(0, 1)) {
                         case "2"://Conditional Moves FALL THROUGH
                         case "6"://Operations FALL THROUGH
                             instructionLength = 2;
-
+                            memory.add(paddedNumber);
                             currentInstructionOffset += instructionLength;
                             //System.out.println(currentInstructionOffset);
-                            System.out.println(decodeFamilyHelper(allContents[i], cycleReadMemory(allContents, i, instructionLength, "6")));
+                            fullInstructions.add(decodeFamilyHelper(allContents[i], cycleReadMemory(allContents, i, instructionLength, "6")));
                             break;
                         case "7"://Jumps
                             //currentInstructionOffset+=instructionLength;
                             instructionLength = 9;
+                            memory.add(paddedNumber);
                             currentInstructionOffset += instructionLength;
-                            System.out.println(decodeFamilyHelper(allContents[i], cycleReadMemory(allContents, i, instructionLength, "7")));
+                            fullInstructions.add(decodeFamilyHelper(allContents[i], cycleReadMemory(allContents, i, instructionLength, "7")));
                             break;
                         default:
                             System.out.println("Program failed to understand instruction?: " + allContents[i]);
@@ -212,17 +287,6 @@ public class Disassembled {
 
             }
 
-        }
-
-
-
-        /*
-        Ending Portion (Usually the stack)
-         */
-        if(start){
-            String paddedNumber = String.format("%-" + width + "x", currentInstructionOffset + 300 + memStartPos); //Default 300  :D
-            System.out.println("\n.pos " + "0x" + paddedNumber); //0x300 is just a given general number
-            System.out.println("stack:");
         }
     }
 
