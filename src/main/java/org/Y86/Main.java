@@ -1,6 +1,7 @@
 package org.Y86;
 
 
+import org.Y86.assembler.Assembler;
 import org.Y86.disassembler.Disassembler;
 
 import java.io.BufferedReader;
@@ -35,9 +36,13 @@ ProcessBuilder builder = new ProcessBuilder("cmd","/c","gcc","test.c");
         Besides E1, Examples don't reflect the changed of 13!
          */
         try {
-            Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/", "E0.txt", 0);
+            Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/", "mrmovq.txt", 0);
+            Disassembler.Break("./src/main/java/org/Y86/disassembler/disassembledCode/realExamples/", "E5.txt", 0);
+
+            Assembler.Read("./src/main/java/org/Y86/assembler/examples/", "E5.txt");
         }catch(Exception e){
-            System.out.println("Error was detected!\n" + e);
+            System.out.println("Error was detected!\n" + e + "\n");
+            e.printStackTrace();
         }
 
     }

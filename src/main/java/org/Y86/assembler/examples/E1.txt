@@ -1,0 +1,7 @@
+call L2103029491
+halt
+
+L2103029491:
+addq %rdi,%rsi
+rrmovq %rsi,%rax
+ret

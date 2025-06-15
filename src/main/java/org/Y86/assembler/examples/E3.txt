@@ -1,0 +1,11 @@
+call L2074566929
+call L1940812055
+halt
+
+L2074566929:
+addq %rdi,%rsi
+rrmovq %rsi,%rax
+ret
+
+L1940812055:
+ret

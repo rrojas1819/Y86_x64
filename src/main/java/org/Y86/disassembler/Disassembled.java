@@ -34,7 +34,7 @@ public class Disassembled {
         instructions.put("25","cmovge");
         instructions.put("26","cmovg");
         instructions.put("30","irmovq");
-        instructions.put("40","rrmovq");
+        instructions.put("40","rmmovq");
         instructions.put("50","mrmovq");
         instructions.put("60","addq");
         instructions.put("61","subq");
@@ -89,7 +89,7 @@ public class Disassembled {
      * @return
      */
     private void checkStart(String[] allContents,int memStartPos){
-        if(allContents[0].contentEquals("30") && allContents[1].contentEquals("F4") && allContents[10].contentEquals("80") && allContents[19].contentEquals("00")){
+        if(allContents.length > 18  && allContents[0].contentEquals("30") && allContents[1].contentEquals("F4") && allContents[10].contentEquals("80") && allContents[19].contentEquals("00")){
             System.out.println(".pos " + memStartPos);
             start=true;
             /*
@@ -159,10 +159,16 @@ public class Disassembled {
                 System.out.println("\n" + labels.get(memory.peek()) + ": ");
             }
             memory.remove();
-            System.out.println(fullInstructions.remove());
+            String check = fullInstructions.remove();
+            if(check.contains("halt") && !arrays.isEmpty()){
+                System.out.println(check);
+                printArrays();
+                continue;
+            }
+            System.out.println(check);
+
                     //System.out.println(fullInstructions.remove() +"\t" + memory.remove());
         }
-        System.out.println(arrays);
 
 
         /*
@@ -174,6 +180,14 @@ public class Disassembled {
             System.out.println("stack:");
         }
     }
+
+    private void printArrays(){
+        System.out.println("\narray:");
+        for(String n : arrays){
+            System.out.println(".quad 0x" + n);
+        }
+    }
+
 
     private void parser(String[] allContents,int startPos, int length){
         currentInstructionOffset=startPos;
@@ -212,7 +226,7 @@ public class Disassembled {
                     instructionLength = 10;
                     memory.add(paddedNumber);
                     currentInstructionOffset += instructionLength;
-                    fullInstructions.add("irmovq " + "$0x" + cycleReadMemory(allContents, i, instructionLength, "30") + "," + registerDecode( allContents[i] + cycleReadMemory(allContents, i, instructionLength, "30"), 3));
+                    fullInstructions.add("irmovq " + "$0x" + cycleReadMemory(allContents, i, instructionLength, "30").substring(2) + "," + registerDecode( allContents[i] + cycleReadMemory(allContents, i, instructionLength, "30"), 3));
 
                     break;
                 case "40"://rmmovq
@@ -327,95 +341,7 @@ public class Disassembled {
     }
 
 
-    /**
-     *Made to work with fakeBreak, of the Disassembler class, more importantly does not parse the correct code, however, can in fact parse the fake to some degree!
-     * @param allContents
-     * @param addressContents
-     * @param memToInstruction
-     */
-    public Disassembled(String allContents, String addressContents, HashMap<String,String> memToInstruction){
-        this.memToInstruction = memToInstruction;
-        String[] allInstructions = allContents.split("\n"); //We are assuming it is separated by a new line.
-        String[] addresses = addressContents.split("\n");
 
-
-        //System.out.println(memToInstruction);
-        int iterator =0;
-        for(String entireInstruction: allInstructions){
-            StringBuilder currentInstruct = new StringBuilder();
-            int i = 0;
-            for(char letter: entireInstruction.toCharArray()){
-                switch(i){
-                    case 0:
-                    case 1:
-                        currentInstruct.append(letter);
-                }
-                i++;
-                if(i > 2){
-                    break;
-                }
-            }
-            //CurrentInstruction houses the first encode of the instruction to work with
-            if(i > 1){
-                entireInstruction = entireInstruction.substring(2);
-            }
-
-            System.out.println(decodeRest(currentInstruct.toString(),addresses[iterator],entireInstruction));
-            iterator++;
-        }
-    }
-
-    /**
-     * Return entire instruction in Assembly Y86-64
-     * @param currentInstruct
-     * @param restOfDecode
-     * @return
-     */
-    private String decodeRest(String currentInstruct,String currentAddress, String restOfDecode){
-        /*
-        I'm looking for the same type of instruction and the same type of address.
-         */
-        currentAddress = currentAddress.strip();
-        if(!labels.isEmpty()){
-            if(memToInstruction.get(currentAddress) != null && memToInstruction.get(currentAddress).contentEquals(currentInstruct) && labels.containsKey(currentAddress)){
-                System.out.println("\n" + labels.get(currentAddress) + ":");
-                labels.remove(currentAddress);
-            }
-        }
-        switch(currentInstruct){
-            //Need all the instructions <---------------
-            case "00"://Halt
-                return "halt";
-            case "10"://Nop
-                return "nop";
-            case "30"://irmovq
-                return "irmovq " + registerDecode(restOfDecode,-1) + "$"+ restOfDecode.substring(2); // This isn't even right LOL
-            case "40"://rmmovq
-                return "rmmovq " + registerDecode(restOfDecode,0) + addressDecode(restOfDecode);
-            case "50"://mrmovq
-                return "mrmovq "+ registerDecode(restOfDecode,1) + addressDecode(restOfDecode);
-            case "80"://Call
-                Map.Entry<String,String> entry = memToInstruction.entrySet().iterator().next();
-                String label = createLabel(addressDecode(restOfDecode),entry.getKey().length());
-                //System.out.println(labels);
-                return "call " + label;
-            case "90"://Return
-                return "ret ";
-            case "A0"://Push
-                return "push " + registerDecode(restOfDecode,2);
-            case "B0"://pop
-                return "pop " + registerDecode(restOfDecode,2);
-            default:// Pure laziness in wanting to set up
-                switch (currentInstruct.substring(0,1)){
-                    case "2"://Conditional Moves FALL THROUGH
-                    case "6"://Operations FALL THROUGH
-                    case "7"://Jumps
-                        return decodeFamilyHelper(currentInstruct,restOfDecode);
-                }
-
-        }
-        return "<--Invalid Read--> : "+ currentInstruct + restOfDecode;
-    }
 
     private String createLabel(String addressDecode,int length){
         String toStore = addressDecode.substring(0,length);

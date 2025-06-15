@@ -1,0 +1,24 @@
+.pos 0
+irmovq $0x4000000000000000,%rsp
+call L789876014
+halt
+
+array:
+.quad 0xA000000000000000
+.quad 0xee00000000000000
+
+L789876014:
+call L1056683174
+ret
+
+L1056683174:
+addq %rdi,%rsi
+rrmovq %rsi,%rax
+ret
+
+L1415088566:
+call L1415088566
+ret
+
+.pos 0x155
+stack:
