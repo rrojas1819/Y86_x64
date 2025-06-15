@@ -1,9 +1,8 @@
 # General Structure of the Assembler
 
-Takes the words and turns them into machine code.
-
-Going to go for a 2 pass structure. 
+Takes the instructions and other word data and turns them into machine code.
 
 
-First pass is going to take the values and categorize Instructions, Registers, "quads"
-"quads"--> Immediates/addresses/etc.
+Assumes proper structure and proper wording, will throw errors if not correct.
+
+More importantly, currently everything is printed but this could be exported to a file once I implement it in the future.
